@@ -20,7 +20,7 @@
         overwrite = (overwrite === true);
         var request = new XMLHttpRequest();
         request.onload = function () {
-            console.log("response", request.response);
+
             var response = JSON.parse(request.response);
             if (response.Conflicts && !overwrite) {
                 var conflicts = response.Conflicts.map(function (c) { return c.FirstName + ' ' + c.LastName + ' (Customer Id: ' + c.CustomerId + ')\n' });
@@ -40,20 +40,6 @@
         request.open("POST", "/Customer/Merge"+(overwrite?'?Overwrite=1':''), true);
         request.setRequestHeader("Content-Type", "application/json; charset=utf-8");
         request.send(JSON.stringify(changedCustomers));
-        //request.send(
-        //    JSON.stringify([{
-        //        customerid: 1,
-        //        firstname: "Charles",
-        //        lastname: "Swanson",
-        //        phone: "9999999999",
-        //        email: "charles@mail.com",
-        //        dateofbirth: {
-        //            month: 11,
-        //            day: 30,
-        //            year: 1965
-        //        },
-        //        UpdatedAt: "2015-07-07T17:09:42.466Z"
-        //    }]));
     }
     document.getElementById('SyncBtn').addEventListener('click', Sync);
 
@@ -101,7 +87,6 @@
     document.getElementById('AddCustomerBtn').addEventListener('click', AddCustomer);
 
     function UpdateForm(evt) {
-        console.log("Id is now", evt.target.value);
         var selectedCustomer = customers.filter(function (c) {
             return c.CustomerId.toString() === evt.target.value.toString();
         })[0];
@@ -199,24 +184,14 @@
             var customerDropDown = document.getElementById('CustomerId');
             customerDropDown.value = this.model.CustomerId;
 
-            //var selectedCustomer = customers.filter(function (c) {
-            //    return c.CustomerId.toString() === customerDropDown.value;
-            //})[0];
             // Update dropdown
             // Unfortunately, HTMLCollections don't inherit from Array :(
-
             Array.prototype.filter.call(customerDropDown.children, (function (c) {
                 return c.nodeName.toUpperCase() === 'OPTION' &&
                     c.value && c.value.toString() === this.model.CustomerId.toString();
             }).bind(this))[0].innerHTML = this.model.LastName + ", " + this.model.FirstName;
         },
         GetValue: function () {
-            //var customersDropDown = ;
-            //var selectedCustomer =
-            //    customers.filter(function (c) {
-            //        return c.CustomerId.toString() === customersDropDown.value;
-            //    })[0];
-
             var newCustomer = new Customer(document.getElementById('CustomerId').value,
                 document.getElementById('FirstName').value,
                 document.getElementById('LastName').value,
@@ -228,7 +203,7 @@
                     Year: parseInt(document.getElementById('DOBYear').value)
                 },
                 document.getElementById('UpdatedAt').value);
-            console.log('new customer', newCustomer);
+
             return newCustomer;
         }
     };
