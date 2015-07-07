@@ -36,12 +36,15 @@
         </div>
         <div class="form-group form-inline">
             <label for="DateOfBirth">Date of birth</label>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBMonth" ><option>Month</option></select>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBDay"><option>Day</option></select>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBYear"><option>Year</option></select>
+            <select class="form-control" style="width:8em;display:inline-block" id="DOBMonth" ><option value="">Month</option></select>
+            <select class="form-control" style="width:8em;display:inline-block" id="DOBDay"><option value="">Day</option></select>
+            <select class="form-control" style="width:8em;display:inline-block" id="DOBYear"><option value ="">Year</optionvalue></select>
         </div>
+        <input type="hidden" id="UpdatedAt" />
 
-        <button type="button" class="btn btn-default" id="SaveBtn">Save</button>
+        <button type="button" class="btn btn-info" id="SyncBtn">Sync</button>
+        <button type="button" class="btn btn-success" id="SaveBtn">Save</button>
+        <button type="button" class="btn btn-default" id="AddCustomerBtn">Add Customer</button>
 
     </div>
 

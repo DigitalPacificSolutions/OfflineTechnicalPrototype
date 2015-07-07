@@ -14,6 +14,7 @@ namespace OfflineTechnicalPrototype.Models
         public string Phone { get; set; }
         public string Email { get; set; }
         public SimpleDate DateOfBirth { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 
     public class SimpleDate

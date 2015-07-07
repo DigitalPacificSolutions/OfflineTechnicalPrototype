@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Text;
 using OfflineTechnicalPrototype.Models;
 using System;
 using System.Collections.Generic;
@@ -16,22 +17,7 @@ namespace OfflineTechnicalPrototype.Controllers
         // GET: /Customer/
 
         public ActionResult Index()
-        {
-            //CustomerStore.Customers.Add(new Customer()
-            //{
-            //    FirstName = "John",
-            //    LastName = "jones",
-            //    Phone = "55555555",
-            //    Email = "johnjones@mail.com",
-            //    DateOfBirth = new DateOfBirth()
-            //    {
-            //        Month=12,
-            //        Day=31,
-            //        Year=2000
-            //    }
-            //});
-            //return Json(CustomerStore.Customers, JsonRequestBehavior.AllowGet);
-            
+        {            
             List<Customer> customers = new List<Customer>();
 
             using(var db = new CustomerContext())
@@ -42,12 +28,13 @@ namespace OfflineTechnicalPrototype.Controllers
                 //    LastName = "Wilson",
                 //    Phone = "55555555",
                 //    Email = "unclesam@mail.com",
-                //    DateOfBirth = new DateOfBirth()
+                //    DateOfBirth = new SimpleDate()
                 //    {
                 //        Month = 12,
                 //        Day = 31,
                 //        Year = 2000
-                //    }
+                //    },
+                //    UpdatedAt = DateTime.Now
                 //};
                 //db.Customers.Add(customer);
                 //db.SaveChanges();
@@ -59,28 +46,77 @@ namespace OfflineTechnicalPrototype.Controllers
                     customers.Add(c);
                 
             }
-            return Json(customers,JsonRequestBehavior.AllowGet);
+            ContentResult result = new ContentResult();
+            result.Content = JsonConvert.SerializeObject(customers);
+            result.ContentEncoding = Encoding.UTF8;
+            result.ContentType = "application/json";
+            return result;
         }
 
         [HttpPost]
         public ActionResult Merge()
         {
             string json;
-            Customer data;
+            List<Customer> data, mergeConflicts = new List<Customer>();
             try
             {
                 using (var reader = new StreamReader(Request.InputStream))
                 {
                     json = reader.ReadToEnd();
                 }
-                data = JsonConvert.DeserializeObject<Customer>(json);
+                data = JsonConvert.DeserializeObject<List<Customer>>(json);
             }
             catch
             {
                 return new HttpStatusCodeResult(422);
             }
-            data.FirstName = "BAZINGA!";
-            return Json(data);
+
+            ContentResult result = new ContentResult();
+            result.ContentEncoding = Encoding.UTF8;
+            result.ContentType = "application/json";
+
+            data.ForEach((remoteCustomer) =>
+            {
+                using (var db = new CustomerContext())
+                {
+                    var custList = 
+                        from c in db.Customers
+                        where c.CustomerId == remoteCustomer.CustomerId
+                        select c;
+                    Customer localCustomer = null;
+                    if (custList.Count() > 0)
+                        localCustomer = custList.First();
+
+                    if (localCustomer == null)
+                    {
+                        remoteCustomer.UpdatedAt = DateTime.Now;
+                        db.Customers.Add(remoteCustomer);
+                    }
+                    else
+                    {
+                        if(Request.QueryString["Overwrite"] != null ||
+                           localCustomer.UpdatedAt == remoteCustomer.UpdatedAt)
+                        {
+                            db.Customers.Remove(localCustomer);
+                            remoteCustomer.UpdatedAt = DateTime.Now;
+                            db.Customers.Add(remoteCustomer);
+                        }
+                        else
+                        {
+                            mergeConflicts.Add(remoteCustomer);
+                        }
+                    }
+
+                }
+            });
+            
+
+            if(mergeConflicts.Count > 0)
+                result.Content = JsonConvert.SerializeObject(new {Conflicts = mergeConflicts});
+            else
+                result.Content = JsonConvert.SerializeObject(new { });
+            
+            return result;
         }
 
     }
