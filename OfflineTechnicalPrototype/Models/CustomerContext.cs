@@ -15,14 +15,14 @@ namespace OfflineTechnicalPrototype.Models
             set { }
         }
 
-        public CustomerContext()// : base("name=CustomerCompactDatabase")
+        public CustomerContext() //: base("name=CustomerAzureSqlDatabase")
         {
             
         }
 
         public void Dispose()
         {
-            
+
         }
     }
 

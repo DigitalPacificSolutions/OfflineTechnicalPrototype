@@ -3,9 +3,10 @@
 
 (function () {
 
-    var customers, customerForm, changedCustomers = [];
+    var customers, customerForm, changedCustomers = [], showAlert = false;
 
-    function Initialize() {
+    function Initialize()
+    {
         InitDates();
         LoadCustomers();
     }
@@ -37,11 +38,29 @@
             }
         };
 
+        request.onerror = function() {
+            alert('Unable to sync, you may need to check your connection and try again');
+        };
+
         request.open("POST", "/Customer/Merge"+(overwrite?'?Overwrite=1':''), true);
         request.setRequestHeader("Content-Type", "application/json; charset=utf-8");
         request.send(JSON.stringify(changedCustomers));
     }
     document.getElementById('SyncBtn').addEventListener('click', Sync);
+
+    function InitializeCustomers()
+    {
+        var html = '';
+        customers.forEach(function (c) {
+            html += '<option value="' + c.CustomerId + '">' + c.LastName + ', ' + c.FirstName + '</option>';
+        });
+        var customerDropDown = document.getElementById('CustomerId');
+        customerDropDown.innerHTML = html;
+        customerDropDown.addEventListener('change', UpdateForm);
+
+        customerForm = new CustomerForm(customers[0]);
+        customerForm.Populate();
+    }
 
     function LoadCustomers()
     {
@@ -54,20 +73,24 @@
             });
             changedCustomers = [];
 
-            var html = '';
-            customers.forEach(function (c) {
-                html += '<option value="' + c.CustomerId + '">' + c.LastName + ', ' + c.FirstName + '</option>';
-            });
-            var customerDropDown = document.getElementById('CustomerId');
-            customerDropDown.innerHTML = html;
-            customerDropDown.addEventListener('change', UpdateForm);
+            // Save to LocalStorage
+            localStorage.setItem('customers', JSON.stringify(customers));
+            localStorage.setItem('changedCustomers', JSON.stringify(changedCustomers));
 
-            customerForm = new CustomerForm(customers[0]);
-            customerForm.Populate();
+            InitializeCustomers();
+            
+            if (showAlert)
+                alert('Sync\'d!');
+            showAlert = true;
         };
 
         request.onerror = function () {
-            console.log("an error has occured");
+            customers = JSON.parse(localStorage.getItem('customers'));
+            changedCustomers = JSON.parse(localStorage.getItem('changedCustomers'));
+
+            InitializeCustomers();
+
+            console.log("an error has occured", customers, changedCustomers);
         };
 
         request.open("GET", "/Customer", true);
@@ -77,23 +100,25 @@
     function AddCustomer()
     {
         var max = Math.max.apply(null, customers.map(function (c) { return c.CustomerId; }));
+        if (max === Infinity || max === -Infinity) max = 0;
 
         document.getElementById('CustomerId').innerHTML += "<option value=\""+(max+1)+"\"></option>";
 
         var customer = new Customer(max + 1);
         customerForm.Populate(customer);
-        //customers.push(customer);
     }
     document.getElementById('AddCustomerBtn').addEventListener('click', AddCustomer);
 
-    function UpdateForm(evt) {
+    function UpdateForm(evt)
+    {
         var selectedCustomer = customers.filter(function (c) {
             return c.CustomerId.toString() === evt.target.value.toString();
         })[0];
         customerForm.Populate(selectedCustomer);
     }
 
-    function InitDates() {
+    function InitDates()
+    {
         var i, html = '';
         for (i = 1; i < 13; i++)
             html += "<option value=\"" + i + "\">" + i + "</option>";
@@ -110,7 +135,8 @@
         document.getElementById("DOBYear").innerHTML += html;
     }
 
-    function SaveCustomer() {
+    function SaveCustomer()
+    {
         var newCustomer = customerForm.GetValue();
         var errors = newCustomer.Validate();
         if (errors.length > 0) {
@@ -120,6 +146,11 @@
 
         ReplaceOrAdd(customers, customers.filter(function (c) { return c.CustomerId == newCustomer.CustomerId; })[0], newCustomer);
         ReplaceOrAdd(changedCustomers, changedCustomers.filter(function (c) { return c.CustomerId == newCustomer.CustomerId; })[0], newCustomer);
+        customerForm.Populate(newCustomer);
+
+        // Save to LocalStorage
+        localStorage.setItem('customers', JSON.stringify(customers));
+        localStorage.setItem('changedCustomers', JSON.stringify(changedCustomers));
 
         return true;
     }
@@ -140,7 +171,8 @@
     window.document.getElementById('SaveBtn').addEventListener('click', SaveCustomer);
 
     function Customer(CustomerId, FirstName, LastName,
-                       Phone, Email, DateOfBirth, UpdatedAt) {
+                       Phone, Email, DateOfBirth, UpdatedAt)
+    {
         this.CustomerId = CustomerId;
         this.FirstName = FirstName || '';
         this.LastName = LastName || '';
@@ -150,7 +182,8 @@
         this.UpdatedAt = UpdatedAt || (new Date).toJSON();
     }
     Customer.prototype = {
-        Validate: function () {
+        Validate: function ()
+        {
             var missingFields = [], errors = [];
             for (var prop in this) {
                 if (this.hasOwnProperty(prop) && typeof this[prop] === 'string' &&
@@ -166,11 +199,13 @@
         }
     };
 
-    function CustomerForm(model) {
+    function CustomerForm(model)
+    {
         this.model = model || {};
     }
     CustomerForm.prototype = {
-        Populate: function (model) {
+        Populate: function (model)
+        {
             this.model = model || this.model;
             for (var prop in this.model) {
                 if (this.model.hasOwnProperty(prop) && typeof this.model[prop] === 'string')
@@ -191,7 +226,8 @@
                     c.value && c.value.toString() === this.model.CustomerId.toString();
             }).bind(this))[0].innerHTML = this.model.LastName + ", " + this.model.FirstName;
         },
-        GetValue: function () {
+        GetValue: function ()
+        {
             var newCustomer = new Customer(document.getElementById('CustomerId').value,
                 document.getElementById('FirstName').value,
                 document.getElementById('LastName').value,

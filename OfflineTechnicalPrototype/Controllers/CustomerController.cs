@@ -18,39 +18,74 @@ namespace OfflineTechnicalPrototype.Controllers
 
         public ActionResult Index()
         {            
-            List<Customer> customers = new List<Customer>();
-
-            using(var db = new CustomerContext())
-            {
-                //var customer = new Customer()
-                //{
-                //    FirstName = "Sam",
-                //    LastName = "Wilson",
-                //    Phone = "55555555",
-                //    Email = "unclesam@mail.com",
-                //    DateOfBirth = new SimpleDate()
-                //    {
-                //        Month = 12,
-                //        Day = 31,
-                //        Year = 2000
-                //    },
-                //    UpdatedAt = DateTime.Now
-                //};
-                //db.Customers.Add(customer);
-                //db.SaveChanges();
-
-                var r = from c in db.Customers
-                        orderby c.LastName
-                        select c;
-                foreach(var c in r)
-                    customers.Add(c);
-                
-            }
+            List<Person> customers;
             ContentResult result = new ContentResult();
-            result.Content = JsonConvert.SerializeObject(customers);
             result.ContentEncoding = Encoding.UTF8;
             result.ContentType = "application/json";
+
+            using (var db = new AussieDiversEntities())
+            {
+                customers = (from p in db.People
+                             orderby p.PersonLastName
+                             select p).ToList();
+                result.Content = JsonConvert.SerializeObject(customers, new JsonSerializerSettings {
+                    //NullValueHandling = NullValueHandling.Ignore
+                });
+            }
+            
             return result;
+        }
+
+        [HttpPost]
+        public ActionResult Save()
+        {
+            string json;
+            Person person;
+
+            try
+            {
+                using (var reader = new StreamReader(Request.InputStream))
+                {
+                    json = reader.ReadToEnd();
+                }
+                person = JsonConvert.DeserializeObject<Person>(json);
+            }
+            catch
+            {
+                return new HttpStatusCodeResult(422);
+            }
+
+            using (var db = new AussieDiversEntities())
+            {
+                var obj = db.People.FirstOrDefault(x => x.PersonID == person.PersonID);
+                if (obj != null)
+                {
+                    obj.PersonFirstName = person.PersonFirstName;
+                    obj.PersonLastName = person.PersonLastName;
+                    obj.PersonEmail = person.PersonEmail;
+                    obj.PersonDOB = person.PersonDOB;
+                    obj.PersonStreetAddress1 = person.PersonStreetAddress1;
+                    obj.PersonStateProvinceTerritory = person.PersonStateProvinceTerritory;
+                    obj.PersonCity = person.PersonCity;
+                    obj.PersonCountry = person.PersonCountry;
+                    obj.PersonPostalCode = person.PersonPostalCode;
+                }
+                else
+                {
+                    db.People.Add(person);
+                }
+                
+                try
+                {
+                    db.SaveChanges();
+                }
+                catch
+                {
+                    return new HttpStatusCodeResult(500);
+                }
+            }
+
+            return new HttpStatusCodeResult(200);
         }
 
         [HttpPost]
@@ -106,7 +141,6 @@ namespace OfflineTechnicalPrototype.Controllers
                             mergeConflicts.Add(remoteCustomer);
                         }
                     }
-
                 }
             });
             

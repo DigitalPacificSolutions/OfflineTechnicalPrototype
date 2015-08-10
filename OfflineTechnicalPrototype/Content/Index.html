@@ -1,53 +1,68 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="Prototype" manifest="/Content/OfflineTechnicalPrototype.appcache">
 <head>
     <title>Offline Technical Prototype</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="Content/css/bootstrap.min.css" rel="stylesheet" />   
+    <script src="Content/vendor/angular.min.js"></script>
+    <script src="Scripts/PersonScripts.js"></script>
 </head>
 <body>
     
-    <div class="container">
+    <div class="container" ng-controller="PersonCtrl as Ctrl">
 
         <h1>Customers</h1>
 
         <hr />
+        <form name="customerForm" novalidate>
+            <div class="form-group">
+                <label>Customer</label>
+                <select required class="form-control" ng-model="Ctrl.Person" ng-change="Ctrl.SaveState()"
+                        ng-options="(person.PersonLastName + ', ' + person.PersonFirstName) for person in Ctrl.People"></select>
+            </div>
 
-        <div class="form-group">
-            <label for="customer">Customer</label>
-            <select class="form-control" id="CustomerId"></select>
-        </div>
-        
-        <div class="form-group">
-            <label for="exampleInputPassword1">First Name</label>
-            <input type="text" class="form-control" id="FirstName" placeholder="First Name">
-        </div>
-        <div class="form-group">
-            <label for="exampleInputPassword1">Last Name</label>
-            <input type="text" class="form-control" id="LastName" placeholder="Last Name">
-        </div>
-        <div class="form-group">
-            <label for="exampleInputPassword1">Phone</label>
-            <input type="text" class="form-control" id="Phone" placeholder="Phone">
-        </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="text" class="form-control" id="Email" placeholder="Email">
-        </div>
-        <div class="form-group form-inline">
-            <label for="DateOfBirth">Date of birth</label>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBMonth" ><option value="">Month</option></select>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBDay"><option value="">Day</option></select>
-            <select class="form-control" style="width:8em;display:inline-block" id="DOBYear"><option value ="">Year</optionvalue></select>
-        </div>
-        <input type="hidden" id="UpdatedAt" />
-
-        <button type="button" class="btn btn-info" id="SyncBtn">Sync</button>
-        <button type="button" class="btn btn-success" id="SaveBtn">Save</button>
-        <button type="button" class="btn btn-default" id="AddCustomerBtn">Add Customer</button>
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonFirstName" placeholder="First Name">
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonLastName" placeholder="Last Name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonEmail" placeholder="Email">
+            </div>
+            <div class="form-group form-inline">
+                <label for="DOBMonth">Date of birth</label><br />
+                <input type="date" format="dd/mm/yyyy" required ng-model="Ctrl.Person.PersonDOB" />
+            </div>
+            <div class="form-group">
+                <label>Street Address</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonStreetAddress1" placeholder="StreetAddress">
+            </div>
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonCity" placeholder="City">
+            </div>
+            <div class="form-group">
+                <label>State/Province/Territory</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonStateProvinceTerritory" placeholder="State/Province/Territory">
+            </div>
+            <div class="form-group">
+                <label>Country</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonCountry" placeholder="Country">
+            </div>
+            <div class="form-group">
+                <label>Postal Code</label>
+                <input type="text" required class="form-control" ng-model="Ctrl.Person.PersonPostalCode" placeholder="Postal Code">
+            </div>
+        </form>
+        <button type="button" class="btn btn-info" ng-disabled="customerForm.$invalid" ng-click="Ctrl.Save()">Save Record</button>
+        <button type="button" class="btn btn-default" ng-click="Ctrl.People.push({});Ctrl.Person = Ctrl.People[Ctrl.People.length-1];">Add Customer</button>
 
     </div>
 
-    <script src="Scripts/CustomerScripts.js"></script>
 </body>
 </html>
